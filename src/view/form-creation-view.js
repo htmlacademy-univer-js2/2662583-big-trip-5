@@ -1,5 +1,5 @@
 import { createElement } from '../render.js';
-export default class createFormView {
+export default class CreationFormView {
   getTemplate() {
     return `            <li class="trip-events__item">
   <form class="event event--edit" action="#" method="post">
