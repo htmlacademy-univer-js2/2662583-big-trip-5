@@ -1,29 +1,71 @@
-import FiltersView from '../view/filter-view.js';
+import FiltersView from '../view/filters-view.js';
 import SortView from '../view/sort-view.js';
-import RoutePointView from '../view/route-point.js';
-import EditFormView from '../view/form-editing-view.js';
-import CreationFormView from '../view/form-creation-view.js';
+import RoutePointView from '../view/route-point-view.js';
+import EditFormView from '../view/edit-form-view.js';
 import ListView from '../view/list-view.js';
 import { render } from '../render.js';
-
+import Model from '../model/model.js';
 export default class Presenter {
   constructor({ filtersContainer, listContainer }) {
     this.filtersContainer = filtersContainer;
     this.listContainer = listContainer;
+    this.model = new Model();
   }
 
   init() {
-    render(new FiltersView(), this.filtersContainer);
-    render(new SortView(), this.listContainer);
+    this.renderFilters();
+    this.renderSort();
+    this.renderRoutePoints();
+    this.renderEditForm();
+  }
 
+  renderFilters() {
+    render(new FiltersView(), this.filtersContainer);
+  }
+
+  renderSort() {
+    render(new SortView(), this.listContainer);
+  }
+
+  renderRoutePoints() {
     const tripEventsListView = new ListView();
     render(tripEventsListView, this.listContainer);
 
-    render(new CreationFormView(), tripEventsListView.getElement());
-    render(new EditFormView(), tripEventsListView.getElement());
-    render(new RoutePointView(), tripEventsListView.getElement());
-    render(new RoutePointView(), tripEventsListView.getElement());
-    render(new RoutePointView(), tripEventsListView.getElement());
+    const routePoints = this.model.getRoutePoints();
 
+    routePoints.forEach((routePoint) => {
+      const destination = this.model.getDestinationById(routePoint.destination);
+      const offers = routePoint.offers || [];
+
+      render(
+        new RoutePointView(routePoint, destination, offers),
+        tripEventsListView.getElement()
+      );
+    });
+  }
+
+  renderEditForm() {
+    const tripEventsListView = this.listContainer.querySelector('.trip-events__list');
+
+    if (tripEventsListView) {
+
+      const destinations = this.model.getDestinations();
+      const offerGroups = this.model.getOfferGroups();
+
+      render(
+        new EditFormView(null, destinations, offerGroups),
+        tripEventsListView,
+        'afterbegin'
+      );
+
+      const firstRoutePoint = this.model.getRoutePoints()[0];
+      if (firstRoutePoint) {
+
+        render(
+          new EditFormView(firstRoutePoint, destinations, offerGroups),
+          tripEventsListView
+        );
+      }
+    }
   }
 }
