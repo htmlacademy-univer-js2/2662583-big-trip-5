@@ -1,19 +1,19 @@
-const TYPES = [
+export const TYPES = [
   'taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'
 ];
 
-const CITIES = [
+export const CITIES = [
   'Amsterdam', 'Geneva', 'Chamonix', 'Paris', 'London',
   'Rome', 'Barcelona', 'Berlin', 'Prague', 'Vienna'
 ];
 
-const OFFER_TITLES = [
+export const OFFER_TITLES = [
   'Add luggage', 'Switch to comfort', 'Add meal',
   'Choose seats', 'Travel by train', 'Order Uber',
   'Rent a car', 'Book tickets', 'Lunch in city'
 ];
 
-const LOREM_IPSUM = [
+export const LOREM_IPSUM = [
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
   'Cras aliquet varius magna, non porta ligula feugiat eget.',
   'Fusce tristique felis at fermentum pharetra.',
@@ -26,6 +26,16 @@ const LOREM_IPSUM = [
   'Nunc fermentum tortor ac porta dapibus.',
   'In rutrum ac purus sit amet tempus.'
 ];
-const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
   'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-export { TYPES, CITIES, OFFER_TITLES, LOREM_IPSUM, months };
+
+export const DateFormat = {
+  DEFAULT: 'DD/MM/YY HH:mm',
+  DATETIME_ATTR: 'YYYY-MM-DDTHH:mm',
+  DAY_ATTR: 'YYYY-MM-DD',
+  MONTH_DAY: 'MMM D',
+  TIME: 'HH:mm',
+  HUMAN_MONTH_DAY: 'MMM D',
+  HUMAN_TIME: 'HH:mm',
+  HUMAN_FULL: 'YYYY-MM-DDTHH:mm:ss'
+};

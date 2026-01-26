@@ -1,6 +1,6 @@
 import { createElement } from '../render.js';
 import { formatDate, formatDuration } from '../utils/utils.js';
-import { months } from '../constants/constants.js';
+import { MONTHS, DateFormat } from '../constants/constants.js';
 
 export default class RoutePointView {
   constructor(routePoint, destination, offers) {
@@ -16,16 +16,16 @@ export default class RoutePointView {
     return `
       <li class="trip-events__item">
         <div class="event">
-          <time class="event__date" datetime="${formatDate(startDate, 'YYYY-MM-DD')}">${formattedDate}</time>
+          <time class="event__date" datetime="${formatDate(startDate, DateFormat.DAY_ATTR)}">${formattedDate}</time>
           <div class="event__type">
             <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
           </div>
           <h3 class="event__title">${type.charAt(0).toUpperCase() + type.slice(1)} ${destinationName}</h3>
           <div class="event__schedule">
             <p class="event__time">
-              <time class="event__start-time" datetime="${formatDate(startDate, 'YYYY-MM-DDTHH:mm')}">${formatDate(startDate, 'HH:mm')}</time>
+              <time class="event__start-time" datetime="${formatDate(startDate, DateFormat.DATETIME_ATTR)}">${formatDate(startDate, DateFormat.TIME)}</time>
               &mdash;
-              <time class="event__end-time" datetime="${formatDate(endDate, 'YYYY-MM-DDTHH:mm')}">${formatDate(endDate, 'HH:mm')}</time>
+              <time class="event__end-time" datetime="${formatDate(endDate, DateFormat.DATETIME_ATTR)}">${formatDate(endDate, DateFormat.TIME)}</time>
             </p>
             <p class="event__duration">${formatDuration(startDate, endDate)}</p>
           </div>
@@ -54,7 +54,7 @@ export default class RoutePointView {
     }
 
     const day = date.getDate();
-    const month = months[date.getMonth()];
+    const month = MONTHS[date.getMonth()];
     return `${month} ${day}`;
   }
 
@@ -64,11 +64,10 @@ export default class RoutePointView {
     }
 
     const offersHtml = this.offers.slice(0, 3).map((offer) => {
-      const title = offer.title || offer;
       const price = offer.price || '';
       return `
         <li class="event__offer">
-          <span class="event__offer-title">${title}</span>
+          <span class="event__offer-title">${offer.title}</span>
           ${price ? `&plus;&euro;&nbsp;<span class="event__offer-price">${price}</span>` : ''}
         </li>
       `;

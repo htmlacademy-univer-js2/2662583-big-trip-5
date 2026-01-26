@@ -3,7 +3,7 @@ import SortView from '../view/sort-view.js';
 import RoutePointView from '../view/route-point-view.js';
 import EditFormView from '../view/edit-form-view.js';
 import ListView from '../view/list-view.js';
-import { render } from '../render.js';
+import { render, RenderPosition } from '../render.js';
 import Model from '../model/model.js';
 export default class Presenter {
   constructor({ filtersContainer, listContainer }) {
@@ -34,7 +34,7 @@ export default class Presenter {
     const routePoints = this.model.getRoutePoints();
 
     routePoints.forEach((routePoint) => {
-      const destination = this.model.getDestinationById(routePoint.destination);
+      const destination = this.model.getDestinationById(routePoint.destinationId);
       const offers = routePoint.offers || [];
 
       render(
@@ -55,7 +55,7 @@ export default class Presenter {
       render(
         new EditFormView(null, destinations, offerGroups),
         tripEventsListView,
-        'afterbegin'
+        RenderPosition.AFTERBEGIN
       );
 
       const firstRoutePoint = this.model.getRoutePoints()[0];

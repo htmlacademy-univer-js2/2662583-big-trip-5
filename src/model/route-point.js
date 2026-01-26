@@ -2,7 +2,7 @@ export default class RoutePoint {
   constructor({
     id = 0,
     type = 'flight',
-    destination = null,
+    destinationId = null,
     startDate = null,
     endDate = null,
     price = 0,
@@ -11,7 +11,7 @@ export default class RoutePoint {
   } = {}) {
     this.id = id;
     this.type = type;
-    this.destination = destination;
+    this.destination = destinationId;
     this.startDate = startDate;
     this.endDate = endDate;
     this.price = price;

@@ -46,7 +46,7 @@ function generateRoutePoint(id) {
   return {
     id,
     type,
-    destination: destinationId,
+    destinationId: destinationId,
     startDate,
     endDate,
     price: getRandomInt(20, 1000),

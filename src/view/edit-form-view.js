@@ -1,5 +1,6 @@
 import { createElement } from '../render.js';
 import { formatDate } from '../utils/utils.js';
+import { TYPES } from '../constants/constants.js';
 export default class EditFormView {
   constructor(routePoint = null, destinations = [], offerGroups = {}) {
     this.routePoint = routePoint;
@@ -19,8 +20,8 @@ export default class EditFormView {
       isFavorite: false
     };
 
-    const destination = point.destination
-      ? this.destinations.find((d) => d.id === point.destination)
+    const destination = point.destinationId
+      ? this.destinations.find((d) => d.id === point.destinationId)
       : null;
 
     const offersForType = this.offerGroups[point.type] || [];
@@ -45,8 +46,7 @@ export default class EditFormView {
   }
 
   getTypeSelectorTemplate(currentType) {
-    const types = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
-    const typesHtml = types.map((type) => `
+    const typesHtml = TYPES.map((type) => `
       <div class="event__type-item">
         <input id="event-type-${type}-1" class="event__type-input visually-hidden" type="radio"
                name="event-type" value="${type}" ${type === currentType ? 'checked' : ''}>
@@ -100,12 +100,12 @@ export default class EditFormView {
         <label class="visually-hidden" for="event-start-time-1">From</label>
         <input class="event__input event__input--time" id="event-start-time-1"
                type="text" name="event-start-time"
-               value="${formatDate(startDate, 'DD/MM/YY HH:mm')}">
+               value="${formatDate(startDate)}">
         &mdash;
         <label class="visually-hidden" for="event-end-time-1">To</label>
         <input class="event__input event__input--time" id="event-end-time-1"
                type="text" name="event-end-time"
-               value="${formatDate(endDate, 'DD/MM/YY HH:mm')}">
+               value="${formatDate(endDate)}">
       </div>
     `;
   }
