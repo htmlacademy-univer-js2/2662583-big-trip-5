@@ -1,15 +1,19 @@
-import { createElement } from '../render.js';
 import { formatDate } from '../utils/utils.js';
 import { TYPES } from '../constants/constants.js';
-export default class EditFormView {
+import AbstractView from '../framework/view/abstract-view.js';
+export default class EditFormView extends AbstractView {
+  #handleSubmit = null;
+  #handleClose = null;
+
   constructor(routePoint = null, destinations = [], offerGroups = {}) {
+    super();
     this.routePoint = routePoint;
     this.destinations = destinations;
     this.offerGroups = offerGroups;
     this.isNew = !routePoint;
   }
 
-  getTemplate() {
+  get template() {
     const point = this.routePoint || {
       type: 'flight',
       destination: null,
@@ -110,6 +114,19 @@ export default class EditFormView {
     `;
   }
 
+  setFormSubmitHandler(callback) {
+    this.#handleSubmit = callback;
+    this.element.querySelector('form')
+      .addEventListener('submit', this.#handleSubmit);
+  }
+
+  setFormCloseHandler(callback) {
+    this.#handleClose = callback;
+    this.element.querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#handleClose);
+  }
+
+
   getPriceTemplate(price) {
     return `
       <div class="event__field-group event__field-group--price">
@@ -186,13 +203,6 @@ export default class EditFormView {
         ` : ''}
       </section>
     `;
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
   }
 
 }
