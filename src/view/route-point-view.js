@@ -1,15 +1,17 @@
-import { createElement } from '../render.js';
 import { formatDate, formatDuration } from '../utils/utils.js';
 import { MONTHS, DateFormat } from '../constants/constants.js';
+import AbstractView from '../framework/view/abstract-view.js';
+export default class RoutePointView extends AbstractView {
+  #editClickHandler = null;
 
-export default class RoutePointView {
   constructor(routePoint, destination, offers) {
+    super();
     this.routePoint = routePoint;
     this.destination = destination;
     this.offers = offers;
   }
 
-  getTemplate() {
+  get template() {
     const { type, startDate, endDate, price, isFavorite } = this.routePoint;
     const destinationName = this.destination ? this.destination.name : '';
     const formattedDate = this.formatMonthDay(startDate);
@@ -48,6 +50,11 @@ export default class RoutePointView {
     `;
   }
 
+  setEditClickHandler(callback) {
+    this.#editClickHandler = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+  }
+
   formatMonthDay(date) {
     if (!date){
       return '';
@@ -81,14 +88,4 @@ export default class RoutePointView {
     `;
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
-  }
 }

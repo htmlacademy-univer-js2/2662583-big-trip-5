@@ -3,69 +3,123 @@ import SortView from '../view/sort-view.js';
 import RoutePointView from '../view/route-point-view.js';
 import EditFormView from '../view/edit-form-view.js';
 import ListView from '../view/list-view.js';
-import { render, RenderPosition } from '../render.js';
+import { render, replace } from '../framework/render.js';
 import Model from '../model/model.js';
 export default class Presenter {
+  #filtersContainer = null;
+  #listContainer = null;
+  #model = null;
+  #routePointComponents = new Map();
+  #editFormComponents = new Map();
+  #escKeyDownHandler = null;
+
   constructor({ filtersContainer, listContainer }) {
-    this.filtersContainer = filtersContainer;
-    this.listContainer = listContainer;
-    this.model = new Model();
+    this.#filtersContainer = filtersContainer;
+    this.#listContainer = listContainer;
+    this.#model = new Model();
   }
 
   init() {
-    this.renderFilters();
-    this.renderSort();
-    this.renderRoutePoints();
-    this.renderEditForm();
+    this.#renderFilters();
+    this.#renderSort();
+    this.#renderRoutePoints();
   }
 
-  renderFilters() {
-    render(new FiltersView(), this.filtersContainer);
+  #renderFilters() {
+    render(new FiltersView(), this.#filtersContainer);
   }
 
-  renderSort() {
-    render(new SortView(), this.listContainer);
+  #renderSort() {
+    render(new SortView(), this.#listContainer);
   }
 
-  renderRoutePoints() {
+  #renderRoutePoints() {
     const tripEventsListView = new ListView();
-    render(tripEventsListView, this.listContainer);
+    render(tripEventsListView, this.#listContainer);
 
-    const routePoints = this.model.getRoutePoints();
+    const routePoints = this.#model.getRoutePoints();
 
     routePoints.forEach((routePoint) => {
-      const destination = this.model.getDestinationById(routePoint.destinationId);
-      const offers = routePoint.offers || [];
-
-      render(
-        new RoutePointView(routePoint, destination, offers),
-        tripEventsListView.getElement()
-      );
+      this.#renderRoutePoint(routePoint, tripEventsListView.element);
     });
   }
 
-  renderEditForm() {
-    const tripEventsListView = this.listContainer.querySelector('.trip-events__list');
+  #renderRoutePoint(routePoint, container) {
+    const destination = this.#model.getDestinationById(routePoint.destinationId);
+    const offers = routePoint.offers;
 
-    if (tripEventsListView) {
+    const routePointComponent = new RoutePointView(
+      routePoint,
+      destination,
+      offers
+    );
 
-      const destinations = this.model.getDestinations();
-      const offerGroups = this.model.getOfferGroups();
+    const editFormComponent = new EditFormView(
+      routePoint,
+      this.#model.getDestinations(),
+      this.#model.getOfferGroups()
+    );
 
-      render(
-        new EditFormView(null, destinations, offerGroups),
-        tripEventsListView,
-        RenderPosition.AFTERBEGIN
-      );
+    this.#routePointComponents.set(routePoint.id, routePointComponent);
+    this.#editFormComponents.set(routePoint.id, editFormComponent);
 
-      const firstRoutePoint = this.model.getRoutePoints()[0];
-      if (firstRoutePoint) {
+    const handleEditClick = () => {
+      this.#replacePointToForm(routePoint.id);
+    };
 
-        render(
-          new EditFormView(firstRoutePoint, destinations, offerGroups),
-          tripEventsListView
-        );
+    const handleFormClose = () => {
+      this.#replaceFormToPoint(routePoint.id);
+    };
+
+    const handleFormSubmit = (evt) => {
+      evt.preventDefault();
+
+      this.#replaceFormToPoint(routePoint.id);
+    };
+
+    routePointComponent.setEditClickHandler(handleEditClick);
+    editFormComponent.setFormSubmitHandler(handleFormSubmit);
+    editFormComponent.setFormCloseHandler(handleFormClose);
+
+    render(routePointComponent, container);
+  }
+
+  #replacePointToForm(pointId) {
+    const pointComponent = this.#routePointComponents.get(pointId);
+    const formComponent = this.#editFormComponents.get(pointId);
+
+    if (pointComponent && formComponent) {
+      replace(formComponent, pointComponent);
+      this.#setEscKeyDownHandler(pointId);
+    }
+  }
+
+  #replaceFormToPoint(pointId) {
+    const pointComponent = this.#routePointComponents.get(pointId);
+    const formComponent = this.#editFormComponents.get(pointId);
+
+    if (pointComponent && formComponent) {
+      replace(pointComponent, formComponent);
+      this.#removeEscKeyDownHandler();
+    }
+  }
+
+  #setEscKeyDownHandler(pointId) {
+    const escKeyDownHandler = (evt) => {
+      if (evt.key === 'Escape' || evt.key === 'Esc') {
+        evt.preventDefault();
+        this.#replaceFormToPoint(pointId);
+        document.removeEventListener('keydown', escKeyDownHandler);
       }
+    };
+
+    document.addEventListener('keydown', escKeyDownHandler);
+  }
+
+  #removeEscKeyDownHandler() {
+    if (this.#escKeyDownHandler) {
+      document.removeEventListener('keydown', this.#escKeyDownHandler);
+      this.#escKeyDownHandler = null;
     }
   }
 }
