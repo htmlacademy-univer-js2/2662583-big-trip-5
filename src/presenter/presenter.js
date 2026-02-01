@@ -105,15 +105,15 @@ export default class Presenter {
   }
 
   #setEscKeyDownHandler(pointId) {
-    const escKeyDownHandler = (evt) => {
+    this.#removeEscKeyDownHandler();
+    this.#escKeyDownHandler = (evt) => {
       if (evt.key === 'Escape' || evt.key === 'Esc') {
         evt.preventDefault();
         this.#replaceFormToPoint(pointId);
-        document.removeEventListener('keydown', escKeyDownHandler);
       }
     };
 
-    document.addEventListener('keydown', escKeyDownHandler);
+    document.addEventListener('keydown', this.#escKeyDownHandler);
   }
 
   #removeEscKeyDownHandler() {
