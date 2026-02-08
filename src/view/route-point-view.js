@@ -6,6 +6,7 @@ export default class RoutePointView extends AbstractView {
   #destination = null;
   #offers = [];
   #editClickHandler = null;
+  #favoriteClickHandler = null;
 
   constructor(routePoint, destination, offers) {
     super();
@@ -56,6 +57,15 @@ export default class RoutePointView extends AbstractView {
   setEditClickHandler(callback) {
     this.#editClickHandler = callback;
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+  }
+
+  setFavoriteClickHandler(callback) {
+    this.#favoriteClickHandler = callback;
+    this.element.querySelector('.event__favorite-btn')
+      .addEventListener('click', (evt) => {
+        evt.preventDefault();
+        this.#favoriteClickHandler();
+      });
   }
 
   #formatMonthDay(date) {
