@@ -25,18 +25,6 @@ export default class Model {
     return this.#offerGroups;
   }
 
-  getDestinations() {
-    return this.#destinations;
-  }
-
-  getRoutePoints() {
-    return this.#routePoints;
-  }
-
-  getOfferGroups() {
-    return this.#offerGroups;
-  }
-
   getOffersByType(type) {
     return this.#offerGroups[type] || [];
   }
@@ -66,8 +54,6 @@ export default class Model {
     }
 
     this.#routePoints[index] = updatedPoint;
-
-    this.#notifyObservers();
     return true;
   }
 
@@ -78,9 +64,4 @@ export default class Model {
   addObserver(callback) {
     this.#observers.push(callback);
   }
-
-  #notifyObservers() {
-    this.#observers.forEach((callback) => callback());
-  }
-
 }

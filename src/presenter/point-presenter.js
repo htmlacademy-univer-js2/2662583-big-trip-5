@@ -1,8 +1,8 @@
 import RoutePointView from '../view/route-point-view.js';
 import EditFormView from '../view/edit-form-view.js';
-import { render } from '../framework/render.js';
+import { render, replace } from '../framework/render.js';
 
-export default class PointPresenter {
+export default class RoutePointPresenter {
   #model = null;
   #container = null;
   #routePoint = null;
@@ -34,22 +34,13 @@ export default class PointPresenter {
 
     this.#editFormComponent = new EditFormView(
       routePoint,
-      this.#model.getDestinations(),
-      this.#model.getOfferGroups()
+      this.#model.destinations,
+      this.#model.offerGroups
     );
 
     this.#routePointComponent.setEditClickHandler(() => {
       this.#replacePointToForm();
     });
-
-    const listItem = document.createElement('li');
-    listItem.className = 'trip-events__item';
-
-    render(this.#routePointComponent, listItem);
-
-    this.#container.appendChild(listItem);
-
-    this.#listItem = listItem;
 
     this.#routePointComponent.setFavoriteClickHandler(() => {
       this.#handleFavoriteClick();
@@ -64,6 +55,14 @@ export default class PointPresenter {
       this.#replaceFormToPoint();
     });
 
+    const listItem = document.createElement('li');
+    listItem.className = 'trip-events__item';
+
+    render(this.#routePointComponent, listItem);
+
+    this.#container.appendChild(listItem);
+
+    this.#listItem = listItem;
   }
 
   #handleFavoriteClick() {
@@ -98,21 +97,25 @@ export default class PointPresenter {
       this.#handleFavoriteClick();
     });
 
-    if (this.#listItem && prevComponent) {
-      this.#listItem.innerHTML = '';
-      render(this.#routePointComponent, this.#listItem);
-    }
-
-    if (this.#listItem && this.#editFormComponent.element.parentElement === this.#listItem) {
-      this.#replaceFormToPoint();
-    } else if (this.#listItem) {
-      this.#listItem.innerHTML = '';
-      render(this.#routePointComponent, this.#listItem);
+    if (this.#listItem) {
+      const isFormOpen = this.#editFormComponent && this.#editFormComponent.element &&
+      this.#editFormComponent.element.parentElement === this.#listItem;
+      if (isFormOpen) {
+        replace(this.#routePointComponent, this.#editFormComponent);
+      } else if (prevComponent && prevComponent.element && prevComponent.element.parentElement) {
+        replace(this.#routePointComponent, prevComponent);
+      } else {
+        render(this.#routePointComponent, this.#listItem);
+      }
     }
   }
 
   #replacePointToForm() {
-    if (!this.#routePointComponent || !this.#editFormComponent) {
+    if (!this.#routePointComponent ||
+        !this.#editFormComponent ||
+        !this.#routePointComponent.element ||
+        !this.#routePointComponent.element.parentElement ||
+        this.#routePointComponent.element.parentElement !== this.#listItem) {
       return;
     }
 
@@ -120,25 +123,20 @@ export default class PointPresenter {
       this.#handleEditStart(this.#routePoint.id);
     }
 
-    this.#listItem.innerHTML = '';
-    render(this.#editFormComponent, this.#listItem);
+    replace(this.#editFormComponent, this.#routePointComponent);
 
-    const favoriteBtn = this.#editFormComponent.element.querySelector('.event__favorite-btn');
-    if (favoriteBtn) {
-      favoriteBtn.addEventListener('click', () => {
-        this.#handleFavoriteClick();
-      });
-    }
     this.#setEscKeyDownHandler();
   }
 
   #replaceFormToPoint(){
-    if (!this.#routePointComponent || !this.#editFormComponent) {
+    if (!this.#routePointComponent ||
+        !this.#editFormComponent ||
+        !this.#editFormComponent.element ||
+        !this.#editFormComponent.element.parentElement ||
+        this.#editFormComponent.element.parentElement !== this.#listItem) {
       return;
     }
-    this.#listItem.innerHTML = '';
-
-    render(this.#routePointComponent, this.#listItem);
+    replace(this.#routePointComponent, this.#editFormComponent);
 
     this.#removeEscKeyDownHandler();
   }

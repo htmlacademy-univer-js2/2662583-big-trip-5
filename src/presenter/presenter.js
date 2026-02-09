@@ -3,19 +3,17 @@ import SortView from '../view/sort-view.js';
 import ListView from '../view/list-view.js';
 import { render } from '../framework/render.js';
 import Model from '../model/model.js';
-import PointPresenter from './point-presenter.js';
+import RoutePointPresenter from './point-presenter.js';
 export default class Presenter {
   #filtersContainer = null;
   #listContainer = null;
   #model = null;
-  #pointPresenters = new Map();
+  #routePointPresenters = new Map();
 
   constructor({ filtersContainer, listContainer }) {
     this.#filtersContainer = filtersContainer;
     this.#listContainer = listContainer;
     this.#model = new Model();
-
-    this.#model.addObserver(() => this.#handleModelChange());
   }
 
   init() {
@@ -36,7 +34,7 @@ export default class Presenter {
     const tripEventsListView = new ListView();
     render(tripEventsListView, this.#listContainer);
 
-    const routePoints = this.#model.getRoutePoints();
+    const routePoints = this.#model.routePoints;
 
     routePoints.forEach((routePoint) => {
       this.#renderRoutePoint(routePoint, tripEventsListView.element);
@@ -44,7 +42,7 @@ export default class Presenter {
   }
 
   #renderRoutePoint(routePoint, container) {
-    const pointPresenter = new PointPresenter({
+    const pointPresenter = new RoutePointPresenter({
       container: container,
       model: this.#model,
       onDataChange: this.#handlePointDataChange.bind(this),
@@ -53,7 +51,7 @@ export default class Presenter {
 
     pointPresenter.init(routePoint);
 
-    this.#pointPresenters.set(routePoint.id, pointPresenter);
+    this.#routePointPresenters.set(routePoint.id, pointPresenter);
   }
 
   #handlePointDataChange(updatedPoint) {
@@ -62,15 +60,11 @@ export default class Presenter {
     if (success) {
       const pointFromModel = this.#model.getRoutePointById(updatedPoint.id);
 
-      const pointPresenter = this.#pointPresenters.get(updatedPoint.id);
+      const pointPresenter = this.#routePointPresenters.get(updatedPoint.id);
       if (pointPresenter) {
         pointPresenter.update(pointFromModel);
       }
     }
-  }
-
-  #handleModelChange(){
-
   }
 
   #handleEditStart(pointId = null) {
@@ -78,12 +72,11 @@ export default class Presenter {
   }
 
   #resetAllForms(exceptPointId = null) {
-    this.#pointPresenters.forEach((presenter, pointId) => {
+    this.#routePointPresenters.forEach((presenter, pointId) => {
       if (pointId !== exceptPointId){
         presenter.resetView();
       }
     });
   }
-
-
 }
+
