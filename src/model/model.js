@@ -4,6 +4,7 @@ export default class Model {
   #destinations = [];
   #routePoints = [];
   #offerGroups = {};
+  #observers = [];
 
   constructor() {
     const mockData = generateMockData();
@@ -21,18 +22,6 @@ export default class Model {
   }
 
   get offerGroups() {
-    return this.#offerGroups;
-  }
-
-  getDestinations() {
-    return this.#destinations;
-  }
-
-  getRoutePoints() {
-    return this.#routePoints;
-  }
-
-  getOfferGroups() {
     return this.#offerGroups;
   }
 
@@ -55,5 +44,24 @@ export default class Model {
       offers: [],
       isFavorite: false
     };
+  }
+
+  updateRoutePoint(updatedPoint) {
+    const index = this.#routePoints.findIndex((point) => point.id === updatedPoint.id);
+
+    if (index === -1) {
+      return false;
+    }
+
+    this.#routePoints[index] = updatedPoint;
+    return true;
+  }
+
+  getRoutePointById(id) {
+    return this.#routePoints.find((point) => point.id === id);
+  }
+
+  addObserver(callback) {
+    this.#observers.push(callback);
   }
 }
