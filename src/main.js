@@ -1,4 +1,4 @@
-import TripPresenter from './presenter/presenter.js';
+import TripPresenter from './presenter/trip-presenter.js';
 
 const filtersContainer = document.querySelector('.trip-controls');
 const listContainer = document.querySelector('.trip-events');
