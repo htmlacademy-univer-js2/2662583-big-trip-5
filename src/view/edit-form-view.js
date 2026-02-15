@@ -97,16 +97,7 @@ export default class EditFormView extends AbstractStatefulView {
       isFavorite: false
     };
 
-    return {
-      id: point.id,
-      type: point.type,
-      destinationId: point.destinationId,
-      startDate: point.startDate,
-      endDate: point.endDate,
-      price: point.price,
-      offers: point.offers || [],
-      isFavorite: point.isFavorite
-    };
+    return point;
   }
 
   #getDestinationById(id) {

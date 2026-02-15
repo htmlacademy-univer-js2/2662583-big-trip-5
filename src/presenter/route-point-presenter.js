@@ -69,13 +69,7 @@ export default class RoutePointPresenter {
     const formState = this.#editFormComponent.getState();
     const updatedPoint = {
       ...this.#routePoint,
-      type: formState.type,
-      destinationId: formState.destinationId,
-      startDate: formState.startDate,
-      endDate: formState.endDate,
-      price: formState.price,
-      offers: formState.offers,
-      isFavorite: formState.isFavorite
+      ...formState
     };
 
     this.#handleDataChange(updatedPoint);
