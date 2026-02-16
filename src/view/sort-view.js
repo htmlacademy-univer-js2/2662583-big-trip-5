@@ -38,7 +38,7 @@ export default class SortView extends AbstractView {
 
     return `
       <form class="trip-events__trip-sort  trip-sort" action="#" method="get">
-        ${createSortItemTemplate(SortType.DAY, 'Day', false, true)}
+        ${createSortItemTemplate(SortType.DAY, 'Day')}
         ${createSortItemTemplate(SortType.EVENT, 'Event', true)}
         ${createSortItemTemplate(SortType.TIME, 'Time')}
         ${createSortItemTemplate(SortType.PRICE, 'Price')}

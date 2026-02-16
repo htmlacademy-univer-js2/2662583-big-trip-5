@@ -99,7 +99,10 @@ export default class TripPresenter {
 
   #handlePointDataChange(updatedPoint) {
     if (this.#model.updateRoutePoint(updatedPoint)) {
-      this.#renderRoutePoints();
+      const pointPresenter = this.#routePointPresenters.get(updatedPoint.id);
+      if (pointPresenter) {
+        pointPresenter.update(updatedPoint);
+      }
     }
   }
 

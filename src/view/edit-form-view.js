@@ -1,7 +1,7 @@
 import { formatDate } from '../utils/utils.js';
 import { TYPES } from '../constants/constants.js';
-import AbstractView from '../framework/view/abstract-view.js';
-export default class EditFormView extends AbstractView {
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+export default class EditFormView extends AbstractStatefulView {
   #routePoint = null;
   #destinations = [];
   #offerGroups = {};
@@ -15,10 +15,79 @@ export default class EditFormView extends AbstractView {
     this.#destinations = destinations;
     this.#offerGroups = offerGroups;
     this.#isNew = !routePoint;
+
+    this._state = this.createState(routePoint);
+    this.#setInnerHandlers();
   }
 
   get template() {
-    const point = this.#routePoint || {
+    const destination = this.#getDestinationById(this._state.destinationId);
+
+    const offersForType = this.#offerGroups[this._state.type] || [];
+    const selectedOffers = this._state.offers;
+
+    return `
+  <li class="trip-events__item">
+    <form class="event event--edit" action="#" method="post">
+      <header class="event__header">
+        ${this.#getTypeSelectorTemplate(this._state.type)}
+        ${this.#getDestinationTemplate(this._state.type, destination)}
+        ${this.#getTimeTemplate(this._state.startDate, this._state.endDate)}
+        ${this.#getPriceTemplate(this._state.price)}
+        ${this.#getButtonsTemplate()}
+      </header>
+      <section class="event__details">
+        ${offersForType.length > 0 ? this.#getOffersTemplate(offersForType, selectedOffers) : ''}
+          ${destination && destination.description ? this.#getDestinationDetailsTemplate(destination) : ''}
+      </section>
+    </form>
+  </li>`;
+  }
+
+  _restoreHandlers() {
+    this.#setInnerHandlers();
+    this.setFormSubmitHandler(this.#handleSubmit);
+    this.setFormCloseHandler(this.#handleClose);
+  }
+
+  #setInnerHandlers() {
+    const typeInputs = this.element.querySelectorAll('.event__type-input');
+    typeInputs.forEach((input) => {
+      input.addEventListener('change', this.#typeChangeHandler);
+    });
+
+    const destinationInput = this.element.querySelector('.event__input--destination');
+    if (destinationInput) {
+      destinationInput.addEventListener('change', this.#destinationChangeHandler);
+    }
+  }
+
+  #typeChangeHandler = (evt) => {
+    evt.preventDefault();
+    const newType = evt.target.value;
+
+    this.updateElement({
+      type: newType,
+      offers: []
+    });
+  };
+
+  #destinationChangeHandler = (evt) => {
+    evt.preventDefault();
+    const destinationName = evt.target.value;
+    const destination = this.#destinations.find((d) => d.name === destinationName);
+
+    if (destination) {
+      this.updateElement({
+        destinationId: destination.id
+      });
+    }
+  };
+
+
+  createState(routePoint) {
+    const point = routePoint || {
+      id: `temp-${Date.now()}`,
       type: 'flight',
       destinationId: null,
       startDate: new Date(),
@@ -27,29 +96,16 @@ export default class EditFormView extends AbstractView {
       offers: [],
       isFavorite: false
     };
-    const destination = point.destinationId
-      ? this.#destinations.find((d) => d.id === point.destinationId)
-      : null;
 
-    const offersForType = this.#offerGroups[point.type] || [];
-    const selectedOffers = point.offers || [];
+    return point;
+  }
 
-    return `
-<li class="trip-events__item">
-  <form class="event event--edit" action="#" method="post">
-    <header class="event__header">
-      ${this.#getTypeSelectorTemplate(point.type)}
-      ${this.#getDestinationTemplate(point.type, destination)}
-      ${this.#getTimeTemplate(point.startDate, point.endDate)}
-      ${this.#getPriceTemplate(point.price)}
-      ${this.#getButtonsTemplate()}
-    </header>
-    <section class="event__details">
-       ${offersForType.length > 0 ? this.#getOffersTemplate(offersForType, selectedOffers) : ''}
-        ${destination && destination.description ? this.#getDestinationDetailsTemplate(destination) : ''}
-    </section>
-  </form>
-</li>`;
+  #getDestinationById(id) {
+    return this.#destinations.find((d) => d.id === id);
+  }
+
+  getState() {
+    return this._state;
   }
 
   #getTypeSelectorTemplate(currentType) {
@@ -129,7 +185,6 @@ export default class EditFormView extends AbstractView {
       .addEventListener('click', this.#handleClose);
   }
 
-
   #getPriceTemplate(price) {
     return `
       <div class="event__field-group event__field-group--price">
@@ -162,21 +217,27 @@ export default class EditFormView extends AbstractView {
   }
 
   #getOffersTemplate(availableOffers, selectedOffers) {
-    const offersHtml = availableOffers.map((offer) => `
-      <div class="event__offer-selector">
-        <input class="event__offer-checkbox visually-hidden"
-               id="event-offer-${offer.id}"
-               type="checkbox"
-               name="event-offer"
-               value="${offer.id}"
-               ${selectedOffers.some((so) => so.id === offer.id) ? 'checked' : ''}>
-        <label class="event__offer-label" for="event-offer-${offer.id}">
-          <span class="event__offer-title">${offer.title}</span>
-          &plus;&euro;&nbsp;
-          <span class="event__offer-price">${offer.price}</span>
-        </label>
-      </div>
-    `).join('');
+    if (!availableOffers || availableOffers.length === 0) {
+      return '';
+    }
+    const offersHtml = availableOffers.map((offer) => {
+      const isChecked = selectedOffers.some((so) => so.id === offer.id);
+      return `
+        <div class="event__offer-selector">
+          <input class="event__offer-checkbox visually-hidden"
+                 id="event-offer-${offer.id}"
+                 type="checkbox"
+                 name="event-offer"
+                 value="${offer.id}"
+                 ${isChecked ? 'checked' : ''}>
+          <label class="event__offer-label" for="event-offer-${offer.id}">
+            <span class="event__offer-title">${offer.title}</span>
+            &plus;&euro;&nbsp;
+            <span class="event__offer-price">${offer.price}</span>
+          </label>
+        </div>
+      `;
+    }).join('');
 
     return `
       <section class="event__section event__section--offers">
@@ -206,6 +267,10 @@ export default class EditFormView extends AbstractView {
         ` : ''}
       </section>
     `;
+  }
+
+  setPoint(routePoint) {
+    this.updateElement(this.createState(routePoint));
   }
 
 }
