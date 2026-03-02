@@ -12,7 +12,7 @@ export default class RoutePointView extends AbstractView {
     super();
     this.#routePoint = routePoint;
     this.#destination = destination;
-    this.#offers = offers;
+    this.#offers = offers || [];
   }
 
   get template() {

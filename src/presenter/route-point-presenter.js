@@ -23,12 +23,23 @@ export default class RoutePointPresenter {
     this.#handleDestroy = onDestroy;
   }
 
+  #prepareOffers(point) {
+    const allOffers = this.#model.getOffersByType(point.type);
+
+    return point.offers
+      .map((selected) =>
+        allOffers.find((offer) => offer.id === selected.id)
+      )
+      .filter(Boolean);
+  }
+
   init(routePoint, isNew = false) {
     this.#routePoint = routePoint;
     this.#isNew = isNew;
 
     const destination = this.#model.getDestinationById(routePoint.destinationId);
-    const offers = routePoint.offers;
+    const offers = this.#prepareOffers(routePoint);
+
 
     this.#routePointComponent = new RoutePointView(
       routePoint,
@@ -81,57 +92,78 @@ export default class RoutePointPresenter {
     }
   }
 
-  #handleFormSubmit() {
-    const formState = this.#editFormComponent.getState();
+  #handleFormSubmit = async () => {
+    this.#editFormComponent.setSaving(true);
 
-    if (this.#isNew && !formState.destinationId) {
-      return;
+    try {
+      const formState = this.#editFormComponent.getState();
+
+      if (this.#isNew && !formState.destinationId) {
+        return;
+      }
+
+      const updatedPoint = {
+        ...this.#routePoint,
+        ...formState,
+        offers: formState.offers || [],
+      };
+
+      if (this.#isNew) {
+        delete updatedPoint.id;
+      }
+
+      const actionType = this.#isNew ? UserAction.ADD_POINT : UserAction.UPDATE_POINT;
+      const updateType = this.#isNew ? UpdateType.MAJOR : UpdateType.MINOR;
+
+      await this.#handleDataChange(actionType, updateType, updatedPoint);
+
+      if (!this.#isNew) {
+        this.#replaceFormToPoint();
+      }
+    } catch (error) {
+      this.#editFormComponent.setSaving(false);
+      this.#editFormComponent.shake();
     }
+  };
 
-    const updatedPoint = {
-      ...this.#routePoint,
-      ...formState,
-      offers: formState.offers || [],
-    };
-
-    if (this.#isNew) {
-      delete updatedPoint.id;
-    }
-
-    const actionType = this.#isNew ? UserAction.ADD_POINT : UserAction.UPDATE_POINT;
-    const updateType = this.#isNew ? UpdateType.MAJOR : UpdateType.MINOR;
-
-    this.#handleDataChange(actionType, updateType, updatedPoint);
-  }
-
-  #handleDeleteClick() {
+  #handleDeleteClick = async () => {
     if (this.#isNew) {
       this.#destroy();
-      if (this.#handleDestroy) {
-        this.#handleDestroy();
-      }
+      this.#handleDestroy?.();
       return;
     }
 
-    this.#handleDataChange(
-      UserAction.DELETE_POINT,
-      UpdateType.MAJOR,
-      this.#routePoint
-    );
-  }
+    this.#editFormComponent.setDeleting(true);
 
-  #handleFavoriteClick() {
+    try {
+      await this.#handleDataChange(
+        UserAction.DELETE_POINT,
+        UpdateType.MAJOR,
+        this.#routePoint
+      );
+    } catch (error) {
+      this.#editFormComponent.setDeleting(false);
+      this.#editFormComponent.shake();
+    }
+  };
+
+
+  #handleFavoriteClick = async () => {
     const updatedPoint = {
       ...this.#routePoint,
       isFavorite: !this.#routePoint.isFavorite
     };
 
-    this.#handleDataChange(
-      UserAction.UPDATE_POINT,
-      UpdateType.PATCH,
-      updatedPoint
-    );
-  }
+    try {
+      await this.#handleDataChange(
+        UserAction.UPDATE_POINT,
+        UpdateType.PATCH,
+        updatedPoint
+      );
+    } catch (error) {
+      this.#routePointComponent.shake();
+    }
+  };
 
   #handleFormClose() {
     if (this.#isNew) {
@@ -148,7 +180,7 @@ export default class RoutePointPresenter {
     this.#routePoint = updatedPoint;
 
     const destination = this.#model.getDestinationById(updatedPoint.destinationId);
-    const offers = updatedPoint.offers;
+    const offers = this.#prepareOffers(updatedPoint);
 
     const prevRoutePointComponent = this.#routePointComponent;
     this.#routePointComponent = new RoutePointView(

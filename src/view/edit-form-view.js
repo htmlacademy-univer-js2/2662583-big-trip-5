@@ -1,5 +1,5 @@
 import { formatDate } from '../utils/utils.js';
-import { TYPES } from '../constants/constants.js';
+import { TYPES, ButtonText } from '../constants/constants.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -25,6 +25,46 @@ export default class EditFormView extends AbstractStatefulView {
     this.#setInnerHandlers();
 
     setTimeout(() => this.#initDatePickers(), 0);
+  }
+
+  setSaving(isSaving) {
+    const submitBtn = this.element.querySelector('.event__save-btn');
+    if (submitBtn) {
+      submitBtn.textContent = isSaving ? ButtonText.SAVING : ButtonText.SAVE;
+      submitBtn.disabled = isSaving;
+    }
+
+    if (isSaving) {
+      this.#disableAllInputs();
+    } else {
+      this.#enableAllInputs();
+    }
+  }
+
+  setDeleting(isDeleting) {
+    const deleteBtn = this.element.querySelector('.event__reset-btn');
+    if (deleteBtn) {
+      deleteBtn.textContent = isDeleting ? ButtonText.DELETING : ButtonText.DELETE;
+      deleteBtn.disabled = isDeleting;
+    }
+
+    if (isDeleting) {
+      this.#disableAllInputs();
+    } else {
+      this.#enableAllInputs();
+    }
+  }
+
+  #disableAllInputs() {
+    this.element.querySelectorAll('input, button, select, textarea').forEach((el) => {
+      el.disabled = true;
+    });
+  }
+
+  #enableAllInputs() {
+    this.element.querySelectorAll('input, button, select, textarea').forEach((el) => {
+      el.disabled = false;
+    });
   }
 
   setFormDeleteHandler(callback) {
@@ -63,15 +103,9 @@ export default class EditFormView extends AbstractStatefulView {
   }
 
   _restoreHandlers() {
-    const priceInput = this.element.querySelector('.event__input--price');
-
     this.#setInnerHandlers();
     this.#initDatePickers();
     this.setFormSubmitHandler(this.#handleSubmit);
-
-    if (priceInput) {
-      priceInput.addEventListener('blur', this.#priceBlurHandler);
-    }
 
     this.setFormCloseHandler(this.#handleClose);
 
@@ -167,7 +201,6 @@ export default class EditFormView extends AbstractStatefulView {
     const priceInput = this.element.querySelector('.event__input--price');
     if (priceInput) {
       priceInput.addEventListener('input', this.#priceChangeHandler);
-      priceInput.addEventListener('blur', this.#priceBlurHandler);
     }
 
     const offerCheckboxes = this.element.querySelectorAll('.event__offer-checkbox');
@@ -213,14 +246,7 @@ export default class EditFormView extends AbstractStatefulView {
     const newPrice = rawValue === '' ? 0 : parseInt(rawValue, 10);
 
     evt.target.value = newPrice;
-  };
-
-  #priceBlurHandler = (evt) => {
-    evt.preventDefault();
-    const finalPrice = parseInt(evt.target.value, 10) || 0;
-    if (this._state.price !== finalPrice) {
-      this.updateElement({ price: finalPrice }, false);
-    }
+    this._state.price = newPrice;
   };
 
   #offerChangeHandler = (evt) => {
@@ -376,14 +402,14 @@ export default class EditFormView extends AbstractStatefulView {
   #getButtonsTemplate() {
     if (this.#isNew) {
       return `
-        <button class="event__save-btn btn btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        <button class="event__save-btn btn btn--blue" type="submit">${ButtonText.SAVE}</button>
+        <button class="event__reset-btn" type="reset">${ButtonText.CANCEL}</button>
       `;
     }
 
     return `
-      <button class="event__save-btn btn btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">Delete</button>
+      <button class="event__save-btn btn btn--blue" type="submit">${ButtonText.SAVE}</button>
+      <button class="event__reset-btn" type="reset">${ButtonText.DELETE}</button>
       <button class="event__rollup-btn" type="button">
         <span class="visually-hidden">Open event</span>
       </button>

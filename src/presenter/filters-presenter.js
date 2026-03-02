@@ -1,5 +1,6 @@
 import { render, replace, remove } from '../framework/render.js';
 import FiltersView from '../view/filters-view.js';
+import { UpdateType } from '../constants/constants.js';
 export default class FiltersPresenter {
   #filtersContainer = null;
   #filtersModel = null;
@@ -45,6 +46,6 @@ export default class FiltersPresenter {
       return;
     }
 
-    this.#filtersModel.setActiveFilter(filterType);
+    this.#filtersModel.setActiveFilter(UpdateType.MAJOR, filterType);
   };
 }

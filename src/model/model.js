@@ -1,18 +1,36 @@
 import Observable from '../framework/observable.js';
-import { generateMockData } from '../mocks/mock-data.js';
 import { UpdateType } from '../constants/constants.js';
+import { adaptPointToClient, adaptPointToServer, adaptDestinationToClient, adaptOffersToClient } from '../api/adapter.js';
 
 export default class Model extends Observable{
+  #api = null;
   #destinations = [];
   #routePoints = [];
   #offerGroups = {};
 
-  constructor() {
+  constructor(api){
     super();
-    const mockData = generateMockData();
-    this.#destinations = mockData.destinations;
-    this.#routePoints = mockData.routePoints;
-    this.#offerGroups = mockData.offerGroups;
+    this.#api = api;
+  }
+
+  async init(){
+    try {
+      const [points, destinations, offers] = await Promise.all([
+        this.#api.getPoints(),
+        this.#api.getDestinations(),
+        this.#api.getOffers(),
+      ]);
+      this.#destinations = destinations.map(adaptDestinationToClient);
+      this.#offerGroups = adaptOffersToClient(offers);
+
+      this.#routePoints = points.map(adaptPointToClient);
+      this._notify(UpdateType.INIT);
+    } catch (error) {
+      this.#routePoints = [];
+      this.#destinations = [];
+      this.#offerGroups = {};
+      this._notify(UpdateType.ERROR, { error: 'Failed to load latest route information' });
+    }
   }
 
   get destinations() {
@@ -27,49 +45,57 @@ export default class Model extends Observable{
     return this.#offerGroups;
   }
 
-  setRoutePoints(points) {
-    this.#routePoints = points;
-    this._notify(UpdateType.MAJOR);
-  }
-
-  updateRoutePoint(updatedPoint, updateType = UpdateType.PATCH) {
-    const index = this.#routePoints.findIndex((point) => point.id === updatedPoint.id);
+  async updateRoutePoint(updateType, update) {
+    const index = this.#routePoints.findIndex((point) => point.id === update.id);
 
     if (index === -1) {
-      return false;
+      throw new Error('Can\'t update unexisting point');
     }
 
-    this.#routePoints[index] = updatedPoint;
-    this._notify(updateType, updatedPoint);
-    return true;
+    try {
+      const serverPoint = adaptPointToServer(update);
+      const response = await this.#api.updatePoint(update.id, serverPoint);
+      const updatedPoint = adaptPointToClient(response);
+
+      this.#routePoints[index] = updatedPoint;
+      this._notify(updateType, updatedPoint);
+    } catch (error) {
+      throw new Error('Can\'t update point');
+    }
   }
 
-  addRoutePoint(newPoint, updateType = UpdateType.MAJOR) {
-    const pointWithId = {
-      ...newPoint,
-      id: String(Date.now() + Math.random()),
-      type: newPoint.type || 'flight',
-      price: Number(newPoint.price) || 0,
-      offers: newPoint.offers || [],
-      isFavorite: false
-    };
-    this.#routePoints.push(pointWithId);
-    this._notify(updateType, pointWithId);
-    return pointWithId;
+  async addRoutePoint(updateType, update) {
+    try {
+      const serverPoint = adaptPointToServer({ ...update, id: undefined });
+      const response = await this.#api.addPoint(serverPoint);
+      const newPoint = adaptPointToClient(response);
+
+      this.#routePoints = [newPoint, ...this.#routePoints];
+      this._notify(updateType, newPoint);
+      return newPoint;
+    } catch (error) {
+      throw new Error('Can\'t add point');
+    }
   }
 
-  deleteRoutePoint(pointId, updateType = UpdateType.MAJOR) {
-    const index = this.#routePoints.findIndex((point) => point.id === pointId);
+  async deleteRoutePoint(updateType, update) {
+    const index = this.#routePoints.findIndex((point) => point.id === update.id);
 
     if (index === -1) {
-      return false;
+      throw new Error('Can\'t delete unexisting point');
     }
 
-    this.#routePoints.splice(index, 1);
-    this._notify(updateType, { id: pointId });
-    return true;
+    try {
+      await this.#api.deletePoint(update.id);
+      this.#routePoints = [
+        ...this.#routePoints.slice(0, index),
+        ...this.#routePoints.slice(index + 1),
+      ];
+      this._notify(updateType);
+    } catch (error) {
+      throw new Error('Can\'t delete point');
+    }
   }
-
 
   getOffersByType(type) {
     return this.#offerGroups[type] || [];
@@ -81,7 +107,7 @@ export default class Model extends Observable{
 
   getEmptyRoutePoint() {
     return {
-      id: 0,
+      id: `temp-${Date.now()}`,
       type: 'flight',
       destinationId: null,
       startDate: new Date(),
@@ -90,9 +116,5 @@ export default class Model extends Observable{
       offers: [],
       isFavorite: false
     };
-  }
-
-  getRoutePointById(id) {
-    return this.#routePoints.find((point) => point.id === id);
   }
 }

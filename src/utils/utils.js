@@ -4,22 +4,6 @@ import { DateFormat } from '../constants/constants.js';
 
 dayjs.extend(duration);
 
-export function getRandomArrayElement(items) {
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-export function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export function getRandomDate() {
-  const now = new Date();
-  const pastDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-  return new Date(pastDate.getTime() + Math.random() * (futureDate.getTime() - pastDate.getTime()));
-}
-
 export function formatDate(date, format = DateFormat.DEFAULT) {
   if (!date){
     return '';
@@ -54,4 +38,9 @@ export function formatDuration(startDate, endDate) {
   }
 
   return `${minutes}M`;
+}
+
+export function generateAuthString(){
+  return Math.random().toString(36).substring(2, 15) +
+         Math.random().toString(36).substring(2, 15);
 }
