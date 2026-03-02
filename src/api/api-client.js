@@ -1,65 +1,52 @@
+import ApiService from '../framework/api-service.js';
 import { AUTHORIZATION } from '../constants/constants.js';
 
-export default class ApiClient {
+export default class ApiClient extends ApiService {
+
   constructor(endpoint) {
-    this._endpoint = endpoint;
-  }
-
-  async _load({url, method = 'GET', body = null, headers = {} }) {
-    const response = await fetch(`${this._endpoint}${url}`, {
-      method,
-      body,
-      headers: {
-        ...headers,
-        'Authorization': AUTHORIZATION,
-      }
-    });
-
-    if (!response.ok){
-      throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
-    }
-
-    return response;
+    super(endpoint, AUTHORIZATION);
   }
 
   async getPoints(){
-    const response = await this._load({ url: '/points' });
-    return response.json();
+    const response = await this._load({ url: 'points' });
+    return ApiService.parseResponse(response);
   }
 
   async getDestinations(){
-    const response = await this._load({ url: '/destinations' });
-    return response.json();
+    const response = await this._load({ url: 'destinations' });
+    return ApiService.parseResponse(response);
   }
 
   async getOffers() {
-    const response = await this._load({ url: '/offers' });
-    return response.json();
+    const response = await this._load({ url: 'offers' });
+    return ApiService.parseResponse(response);
   }
 
   async updatePoint(pointId, pointData) {
     const response = await this._load({
-      url: `/points/${pointId}`,
+      url: `points/${pointId}`,
       method: 'PUT',
       body: JSON.stringify(pointData),
-      headers: { 'Content-Type': 'application/json' },
+      headers: new Headers({ 'Content-Type': 'application/json' })
     });
-    return response.json();
+
+    return ApiService.parseResponse(response);
   }
 
   async addPoint(pointData){
     const response = await this._load({
-      url: '/points',
+      url: 'points',
       method: 'POST',
       body: JSON.stringify(pointData),
-      headers: { 'Content-Type': 'application/json' },
+      headers: new Headers({ 'Content-Type': 'application/json' })
     });
-    return response.json();
+
+    return ApiService.parseResponse(response);
   }
 
   async deletePoint(pointId){
     await this._load({
-      url: `/points/${pointId}`,
+      url: `points/${pointId}`,
       method: 'DELETE'
     });
   }

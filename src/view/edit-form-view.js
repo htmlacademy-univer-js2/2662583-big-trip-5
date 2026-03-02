@@ -103,15 +103,9 @@ export default class EditFormView extends AbstractStatefulView {
   }
 
   _restoreHandlers() {
-    const priceInput = this.element.querySelector('.event__input--price');
-
     this.#setInnerHandlers();
     this.#initDatePickers();
     this.setFormSubmitHandler(this.#handleSubmit);
-
-    if (priceInput) {
-      priceInput.addEventListener('blur', this.#priceBlurHandler);
-    }
 
     this.setFormCloseHandler(this.#handleClose);
 
@@ -207,7 +201,6 @@ export default class EditFormView extends AbstractStatefulView {
     const priceInput = this.element.querySelector('.event__input--price');
     if (priceInput) {
       priceInput.addEventListener('input', this.#priceChangeHandler);
-      priceInput.addEventListener('blur', this.#priceBlurHandler);
     }
 
     const offerCheckboxes = this.element.querySelectorAll('.event__offer-checkbox');
@@ -253,14 +246,7 @@ export default class EditFormView extends AbstractStatefulView {
     const newPrice = rawValue === '' ? 0 : parseInt(rawValue, 10);
 
     evt.target.value = newPrice;
-  };
-
-  #priceBlurHandler = (evt) => {
-    evt.preventDefault();
-    const finalPrice = parseInt(evt.target.value, 10) || 0;
-    if (this._state.price !== finalPrice) {
-      this.updateElement({ price: finalPrice }, false);
-    }
+    this._state.price = newPrice;
   };
 
   #offerChangeHandler = (evt) => {

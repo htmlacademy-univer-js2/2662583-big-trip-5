@@ -2,7 +2,6 @@ import SortView from '../view/sort-view.js';
 import ListView from '../view/list-view.js';
 import EmptyListView from '../view/empty-list-view.js';
 import { render, remove } from '../framework/render.js';
-// import Model from '../model/model.js';
 import FiltersModel from '../model/filters-model.js';
 import FiltersPresenter from './filters-presenter.js';
 import RoutePointPresenter from './route-point-presenter.js';
@@ -205,7 +204,28 @@ export default class TripPresenter {
     }
   };
 
+  #clearBoard() {
+    this.#clearRoutePoints();
+
+    if (this.#sortComponent) {
+      remove(this.#sortComponent);
+      this.#sortComponent = null;
+    }
+
+    if (this.#listComponent) {
+      remove(this.#listComponent);
+      this.#listComponent = null;
+    }
+
+    if (this.#emptyListComponent) {
+      remove(this.#emptyListComponent);
+      this.#emptyListComponent = null;
+    }
+  }
+
+
   #renderBoard() {
+    this.#clearBoard();
     if (this.points.length === 0 && !this.#isCreating) {
       this.#renderEmptyList();
       return;

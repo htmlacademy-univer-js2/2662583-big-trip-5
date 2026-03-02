@@ -1,6 +1,6 @@
 import Observable from '../framework/observable.js';
 import { UpdateType } from '../constants/constants.js';
-import { adaptPointToClient, adaptPointToServer } from '../api/adapter.js';
+import { adaptPointToClient, adaptPointToServer, adaptDestinationToClient, adaptOffersToClient } from '../api/adapter.js';
 
 export default class Model extends Observable{
   #api = null;
@@ -20,11 +20,8 @@ export default class Model extends Observable{
         this.#api.getDestinations(),
         this.#api.getOffers(),
       ]);
-      this.#destinations = destinations;
-      this.#offerGroups = offers.reduce((acc, offerGroup) => {
-        acc[offerGroup.type] = offerGroup.offers;
-        return acc;
-      }, {});
+      this.#destinations = destinations.map(adaptDestinationToClient);
+      this.#offerGroups = adaptOffersToClient(offers);
 
       this.#routePoints = points.map(adaptPointToClient);
       this._notify(UpdateType.INIT);
@@ -110,7 +107,7 @@ export default class Model extends Observable{
 
   getEmptyRoutePoint() {
     return {
-      id: 0,
+      id: `temp-${Date.now()}`,
       type: 'flight',
       destinationId: null,
       startDate: new Date(),
