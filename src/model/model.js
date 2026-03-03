@@ -65,17 +65,12 @@ export default class Model extends Observable{
   }
 
   async addRoutePoint(updateType, update) {
-    try {
-      const serverPoint = adaptPointToServer({ ...update, id: undefined });
-      const response = await this.#api.addPoint(serverPoint);
-      const newPoint = adaptPointToClient(response);
+    const response = await this.#api.addPoint(adaptPointToServer(update));
+    const adaptedPoint = adaptPointToClient(response);
 
-      this.#routePoints = [newPoint, ...this.#routePoints];
-      this._notify(updateType, newPoint);
-      return newPoint;
-    } catch (error) {
-      throw new Error('Can\'t add point');
-    }
+    this.#routePoints = [adaptedPoint, ...this.#routePoints];
+
+    this._notify(updateType, adaptedPoint);
   }
 
   async deleteRoutePoint(updateType, update) {

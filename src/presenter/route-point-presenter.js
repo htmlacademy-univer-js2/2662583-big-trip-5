@@ -40,6 +40,8 @@ export default class RoutePointPresenter {
     const destination = this.#model.getDestinationById(routePoint.destinationId);
     const offers = this.#prepareOffers(routePoint);
 
+    const prevRoutePointComponent = this.#routePointComponent;
+    const prevEditFormComponent = this.#editFormComponent;
 
     this.#routePointComponent = new RoutePointView(
       routePoint,
@@ -77,19 +79,38 @@ export default class RoutePointPresenter {
       });
     }
 
-    if (this.#isNew) {
-      const tempContainer = document.createElement('div');
-      render(this.#editFormComponent, tempContainer);
+    if (prevRoutePointComponent === null && prevEditFormComponent === null) {
+      if (this.#isNew) {
+        const tempContainer = document.createElement('div');
+        render(this.#editFormComponent, tempContainer);
 
-      if (this.#container.firstChild) {
-        this.#container.insertBefore(tempContainer.firstChild, this.#container.firstChild);
+        if (this.#container.firstChild) {
+          this.#container.insertBefore(tempContainer.firstChild, this.#container.firstChild);
+        } else {
+          this.#container.appendChild(tempContainer.firstChild);
+        }
+        this.#setEscKeyDownHandler();
       } else {
-        this.#container.appendChild(tempContainer.firstChild);
+        render(this.#routePointComponent, this.#container);
       }
-      this.#setEscKeyDownHandler();
-    } else {
-      render(this.#routePointComponent, this.#container);
+      return;
     }
+
+    if (this.#isNew) {
+      return;
+    }
+
+    if (this.#container.contains(prevRoutePointComponent?.element)) {
+      replace(this.#routePointComponent, prevRoutePointComponent);
+    }
+
+    if (this.#container.contains(prevEditFormComponent?.element)) {
+      replace(this.#editFormComponent, prevEditFormComponent);
+      this.#setEscKeyDownHandler();
+    }
+
+    remove(prevRoutePointComponent);
+    remove(prevEditFormComponent);
   }
 
   #handleFormSubmit = async () => {
@@ -99,6 +120,8 @@ export default class RoutePointPresenter {
       const formState = this.#editFormComponent.getState();
 
       if (this.#isNew && !formState.destinationId) {
+        this.#editFormComponent.setSaving(false);
+        this.#editFormComponent.shake();
         return;
       }
 
@@ -113,10 +136,11 @@ export default class RoutePointPresenter {
       }
 
       const actionType = this.#isNew ? UserAction.ADD_POINT : UserAction.UPDATE_POINT;
-      const updateType = this.#isNew ? UpdateType.MAJOR : UpdateType.MINOR;
+      const updateType = this.#isNew ? UpdateType.MINOR : UpdateType.PATCH;
 
       await this.#handleDataChange(actionType, updateType, updatedPoint);
 
+      this.#editFormComponent.setSaving(false);
       if (!this.#isNew) {
         this.#replaceFormToPoint();
       }
@@ -138,7 +162,7 @@ export default class RoutePointPresenter {
     try {
       await this.#handleDataChange(
         UserAction.DELETE_POINT,
-        UpdateType.MAJOR,
+        UpdateType.MINOR,
         this.#routePoint
       );
     } catch (error) {
@@ -183,10 +207,19 @@ export default class RoutePointPresenter {
     const offers = this.#prepareOffers(updatedPoint);
 
     const prevRoutePointComponent = this.#routePointComponent;
+    const prevEditFormComponent = this.#editFormComponent;
+
     this.#routePointComponent = new RoutePointView(
       updatedPoint,
       destination,
       offers
+    );
+
+    this.#editFormComponent = new EditFormView(
+      updatedPoint,
+      this.#model.destinations,
+      this.#model.offerGroups,
+      this.#isNew
     );
 
     this.#routePointComponent.setEditClickHandler(() => {
@@ -196,15 +229,6 @@ export default class RoutePointPresenter {
     this.#routePointComponent.setFavoriteClickHandler(() => {
       this.#handleFavoriteClick();
     });
-
-
-    const prevEditFormComponent = this.#editFormComponent;
-    this.#editFormComponent = new EditFormView(
-      updatedPoint,
-      this.#model.destinations,
-      this.#model.offerGroups,
-      this.#isNew
-    );
 
     this.#editFormComponent.setFormSubmitHandler((evt) => {
       evt.preventDefault();
@@ -221,18 +245,15 @@ export default class RoutePointPresenter {
       });
     }
 
-    const isFormShown = this.#editFormComponent &&
-      this.#editFormComponent.element &&
-      this.#editFormComponent.element.parentElement === this.#container;
+    if (this.#container.contains(prevRoutePointComponent?.element)) {
+      replace(this.#routePointComponent, prevRoutePointComponent);
+    }
 
-    if (isFormShown) {
+    if (this.#container.contains(prevEditFormComponent?.element)) {
       replace(this.#editFormComponent, prevEditFormComponent);
       this.#setEscKeyDownHandler();
-    } else {
-      if (prevRoutePointComponent && prevRoutePointComponent.element.parentElement === this.#container) {
-        replace(this.#routePointComponent, prevRoutePointComponent);
-      }
     }
+
     remove(prevRoutePointComponent);
     remove(prevEditFormComponent);
   }
